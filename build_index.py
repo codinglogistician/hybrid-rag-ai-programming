@@ -123,35 +123,3 @@ def _build_vectorstore(doc_splits, embeddings):
     )
     return vs
 
-from langchain_core.tools import create_retriever_tool
-from langchain_openai import OpenAIEmbeddings
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from dotenv import load_dotenv
-load_dotenv()
-
-if __name__ == "__main__":
-    _download_from_kaggle()
-    df = _load_dataframe()
-    docs = _df_to_docs(df)
-    _text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
-        chunk_size=400,
-        chunk_overlap=100,
-    )
-    doc_splits = _text_splitter.split_documents(docs) if docs else []
-    if doc_splits:
-        print(f"   • Chunków: {len(doc_splits):,}")
-
-    _embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
-    _vectorstore = _build_vectorstore(doc_splits, _embeddings)
-    retriever = _vectorstore.as_retriever()
-
-    retriever_tool = create_retriever_tool(
-        retriever,
-        "search_docker_docs",
-        "Wyszukuj fragmenty dokumentacji Docker (instrukcje, API, konfiguracja, opisy).",
-    )
-    results = retriever.invoke("Jak zainstalować Docker Desktop na Linuxie?")
-    if results:
-        print(results[0].page_content)
-    else:
-        print("(brak wyników)")
